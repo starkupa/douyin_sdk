@@ -16,35 +16,35 @@ import (
 
 // Oauth 保存用户授权信息
 type Oauth struct {
-	Identity
+	CacheIdentity
 	cache        dependency.Cache
 	clientKey    string
 	clientSecret string
 	lock         *sync.Mutex
 }
 
-type Identity struct {
+type CacheIdentity struct {
 	keyPrefix string // cache key prefix
 	identity  string // eg. application inner user id
 }
 
 // NewOauth 实例化授权信息
 func NewOauth(clientKey, clientSecret, identity, keyPrefix string, cache dependency.Cache) *Oauth {
-	id := Identity{keyPrefix, identity}
+	id := CacheIdentity{keyPrefix, identity}
 	return &Oauth{
-		clientKey:    clientKey,
-		clientSecret: clientSecret,
-		Identity:     id,
-		cache:        cache,
-		lock:         &sync.Mutex{},
+		clientKey:     clientKey,
+		clientSecret:  clientSecret,
+		CacheIdentity: id,
+		cache:         cache,
+		lock:          &sync.Mutex{},
 	}
 }
 
-func (o *Oauth) GetClientKey() string {
+func (o *Oauth) getClientKey() string {
 	return o.clientKey
 }
 
-func (o *Oauth) GetClientSecret() string {
+func (o *Oauth) getClientSecret() string {
 	return o.clientSecret
 }
 
@@ -55,12 +55,12 @@ func (o *Oauth) Redirect(writer http.ResponseWriter, req *http.Request, clientKe
 
 // getAuthQrCode 获取二维码
 func (o *Oauth) GetAuthQrCode(ctx context.Context, redirectUri, state, scope string) (*web.TiktokGetAuthCodeData, dependency.Catcher) {
-	return getAuthQrCode(ctx, o.GetClientKey(), redirectUri, state, scope)
+	return getAuthQrCode(ctx, o.getClientKey(), redirectUri, state, scope)
 }
 
 // checkAuthQrCode check二维码
 func (o *Oauth) CheckAuthQrCode(ctx context.Context, token, redirectUri, state, scope string) (*web.TiktokCheckAuthCodeData, dependency.Catcher) {
-	return checkAuthQrCode(ctx, o.GetClientKey(), token, redirectUri, state, scope)
+	return checkAuthQrCode(ctx, o.getClientKey(), token, redirectUri, state, scope)
 }
 
 // CheckQrCodeAndSaveToken 检测二维码，授权保存 access_token
@@ -82,7 +82,7 @@ func (o *Oauth) CheckQrCodeAndSaveToken(ctx context.Context, token, redirectUri,
 
 // getAccessToken 获取 access_token
 func (o *Oauth) GetAccessToken(ctx context.Context, code string) (*web.AccessTokenData, dependency.Catcher) {
-	data, ex := getAccessToken(ctx, o.GetClientKey(), o.GetClientSecret(), code)
+	data, ex := getAccessToken(ctx, o.getClientKey(), o.getClientSecret(), code)
 	if ex != nil {
 		return nil, ex
 	}
@@ -142,10 +142,10 @@ func (o *Oauth) GetAndRefreshAccessToken(ctx context.Context) (*web.AccessTokenD
 
 // refreshAccessToken 刷新access_token
 func (o *Oauth) RefreshAccessToken(ctx context.Context, refreshToken string) (*web.RefreshAccessTokenData, dependency.Catcher) {
-	return refreshAccessToken(ctx, o.GetClientKey(), refreshToken)
+	return refreshAccessToken(ctx, o.getClientKey(), refreshToken)
 }
 
 // renewRefreshToken 刷新 refresh_token
 func (o *Oauth) RenewRefreshToken(ctx context.Context, refreshToken string) (*web.RenewRefreshTokenData, dependency.Catcher) {
-	return renewRefreshToken(ctx, o.GetClientKey(), refreshToken)
+	return renewRefreshToken(ctx, o.getClientKey(), refreshToken)
 }

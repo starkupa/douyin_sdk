@@ -12,7 +12,7 @@ func (r *RefreshAccessTokenRequest) ToValues() url.Values {
 	data := url.Values{}
 	data.Set("client_key", r.ClientKey)
 	data.Set("refresh_token", r.RefreshToken)
-	data.Set("grant_type", "refresh_token")
+	data.Set("grant_type", r.RefreshToken)
 	return data
 }
 

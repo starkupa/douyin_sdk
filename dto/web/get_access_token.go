@@ -14,7 +14,7 @@ func (r *AccessTokenRequest) ToValues() url.Values {
 	data.Set("client_key", r.ClientKey)
 	data.Set("client_secret", r.ClientSecret)
 	data.Set("code", r.Code)
-	data.Set("grant_type", "authorization_code")
+	data.Set("grant_type", r.GrantType)
 	return data
 }
 

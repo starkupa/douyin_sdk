@@ -15,11 +15,11 @@ const (
 )
 
 func (o *Oauth) getAccessTokenKey() string {
-	return fmt.Sprintf("%v:%v:%v", o.keyPrefix, accessTokenInfoKey, o.Identity.identity)
+	return fmt.Sprintf("%v:%v:%v", o.keyPrefix, accessTokenInfoKey, o.identity)
 }
 
 func (o *Oauth) getRefreshTokenKey() string {
-	return fmt.Sprintf("%v:%v:%v", o.keyPrefix, refreshTokenInfoKey, o.Identity.identity)
+	return fmt.Sprintf("%v:%v:%v", o.keyPrefix, refreshTokenInfoKey, o.identity)
 }
 
 func (o *Oauth) GetCacheRefreshToken(ctx context.Context) (*web.AccessTokenCoreData, error) {

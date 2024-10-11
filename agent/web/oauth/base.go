@@ -72,7 +72,7 @@ func (o *Oauth) CheckQrCodeAndSaveToken(ctx context.Context, token, redirectUri,
 	if reply.Status != "confirmed" {
 		return reply, nil
 	}
-	ac, ex := o.GetAccessToken(ctx, reply.Code)
+	ac, ex := o.GetAndCacheAccessToken(ctx, reply.Code)
 	if ex != nil {
 		return nil, dependency.ERROR_BUSI.Error(ex.Error())
 	}
@@ -80,7 +80,7 @@ func (o *Oauth) CheckQrCodeAndSaveToken(ctx context.Context, token, redirectUri,
 	return reply, nil
 }
 
-// getAccessToken 获取 access_token
+// Deprecated:  获取 access_token，GetAndCacheAccessToken代替
 func (o *Oauth) GetAccessToken(ctx context.Context, code string) (*web.AccessTokenData, dependency.Catcher) {
 	data, ex := getAccessToken(ctx, o.getClientKey(), o.getClientSecret(), code)
 	if ex != nil {
@@ -95,6 +95,36 @@ func (o *Oauth) GetAccessToken(ctx context.Context, code string) (*web.AccessTok
 		return nil, dependency.ERROR_AUTH.Error(err)
 	}
 	return data, nil
+}
+
+// GetAndCacheAccessToken 从抖音获取 access_token，并缓存到cache
+func (o *Oauth) GetAndCacheAccessToken(ctx context.Context, code string) (*web.AccessTokenData, dependency.Catcher) {
+	// 获取 access_token
+	data, ex := o.BaseGetAccessToken(ctx, code)
+	if ex != nil {
+		return nil, ex
+	}
+	// 缓存token
+	if ex = o.BaseCacheToken(ctx, &data.AccessTokenCoreData); ex != nil {
+		return nil, ex
+	}
+	return data, nil
+}
+
+func (o *Oauth) BaseGetAccessToken(ctx context.Context, code string) (*web.AccessTokenData, dependency.Catcher) {
+	return getAccessToken(ctx, o.getClientKey(), o.getClientSecret(), code)
+}
+
+func (o *Oauth) BaseCacheToken(ctx context.Context, data *web.AccessTokenCoreData) dependency.Catcher {
+	// 缓存 access_token
+	if err := o.setCacheAccessToken(ctx, data, time.Duration(data.ExpiresIn-3600)*time.Second); err != nil {
+		return dependency.ERROR_AUTH.Error(err)
+	}
+	// 缓存 refresh_token
+	if err := o.setCacheRefreshToken(ctx, data, time.Duration(data.RefreshExpiresIn-3600)*time.Second); err != nil {
+		return dependency.ERROR_AUTH.Error(err)
+	}
+	return nil
 }
 
 // GetAndRefreshAccessToken 从cache获取 access_token，若无则从抖音获取
